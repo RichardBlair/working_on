@@ -1,0 +1,5 @@
+# File: bin/working_on
+#!/usr/bin/env ruby
+require 'working_on'
+
+WorkingOn.run(ARGV)
