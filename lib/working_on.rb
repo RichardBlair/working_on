@@ -26,6 +26,7 @@ class WorkingOn
     log_previous_project(current_time)
     @data['current_project'] = project
     @data['last_start_time'] = current_time
+    @data['session'] = current_time.to_s
     save_data
     puts "Now working on: #{project}"
   end
@@ -41,12 +42,15 @@ class WorkingOn
 
   def add_note(note)
     if @data['current_project']
-      @data['projects'] ||= {}
-      @data['projects'][@data['current_project']] ||= { 'time_intervals' => [], 'notes' => [] }
-      @data['projects'][@data['current_project']]['notes'] << {
+      initialize_project
+
+      session = @data['session']
+
+      @data['projects'][@data['current_project']]['sessions'][session]['notes'] << {
         'timestamp' => Time.now.to_i,
         'content' => note
       }
+
       save_data
       puts "Note added to project: #{@data['current_project']}"
     else
@@ -56,13 +60,31 @@ class WorkingOn
 
   private
 
+  def initialize_project
+    project = @data['current_project']
+    session = @data['session']
+    start_time = @data['last_start_time']
+
+    @data['projects'] ||= {}
+    @data['projects'][project] ||= { 'sessions' => {} }
+    @data['projects'][project]['sessions'][session] ||= { 'start_time' => start_time, 'notes' => [] }
+  end
+
   def log_previous_project(end_time)
-    if @data['current_project'] && @data['last_start_time']
+    if @data['current_project']
+      session = @data['session']
       project = @data['current_project']
       start_time = @data['last_start_time']
-      @data['projects'] ||= {}
-      @data['projects'][project] ||= { 'time_intervals' => [], 'notes' => [] }
-      @data['projects'][project]['time_intervals'] << [start_time, end_time]
+
+      initialize_project
+
+      @data['projects'][project]['sessions'][session]['end_time'] = end_time
+      @data['projects'][project]['sessions'][session]['duration'] = end_time
+      @data['projects'][project]['sessions'][session]['formatted'] = {
+        start_time: Time.at(start_time).to_s,
+        end_time: Time.at(end_time).to_s,
+      }
+
       duration = (end_time - start_time) / 3600.0  # Convert to hours for display
       puts "Logged #{duration.round(2)} hours for project: #{project}"
     end
