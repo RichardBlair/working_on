@@ -7,9 +7,11 @@ class WorkingOn
   def self.run(args)
     instance = new
     if args.empty?
-      puts "Usage: working_on <project> or working_on --logoff or working_on --note <note>"
+      puts "Usage: working_on <project> or working_on --logoff or working_on --note <note> or working_on --projects"
     elsif args[0] == '--logoff'
       instance.log_off
+    elsif args[0] == '--projects'
+      instance.list_projects
     elsif args[0] == '--note' && args.size > 1
       instance.add_note(args[1..-1].join(' '))
     else
@@ -21,12 +23,18 @@ class WorkingOn
     @data = load_data
   end
 
+  def list_projects
+    projects = @data['projects'] || {}
+    puts "Projects: #{projects.keys.join(', ')}"
+  end
+
   def start_project(project)
     current_time = Time.now.to_i
     log_previous_project(current_time)
     @data['current_project'] = project
     @data['last_start_time'] = current_time
     @data['session'] = current_time.to_s
+    initialize_project
     save_data
     puts "Now working on: #{project}"
   end
